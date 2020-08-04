@@ -1088,9 +1088,6 @@ extern unsigned int *adreno_ft_regs;
 extern unsigned int adreno_ft_regs_num;
 extern unsigned int *adreno_ft_regs_val;
 
-extern struct adreno_gpudev adreno_a3xx_gpudev;
-extern struct adreno_gpudev adreno_a4xx_gpudev;
-extern struct adreno_gpudev adreno_a5xx_gpudev;
 extern struct adreno_gpudev adreno_a6xx_gpudev;
 
 extern int adreno_wake_nice;
@@ -1105,8 +1102,6 @@ long adreno_ioctl_helper(struct kgsl_device_private *dev_priv,
 		unsigned int cmd, unsigned long arg,
 		const struct kgsl_ioctl *cmds, int len);
 
-int a5xx_critical_packet_submit(struct adreno_device *adreno_dev,
-		struct adreno_ringbuffer *rb);
 int adreno_set_unsecured_mode(struct adreno_device *adreno_dev,
 		struct adreno_ringbuffer *rb);
 void adreno_spin_idle_debug(struct adreno_device *adreno_dev, const char *str);
@@ -1239,8 +1234,8 @@ static inline int adreno_is_a430v2(struct adreno_device *adreno_dev)
 
 static inline int adreno_is_a5xx(struct adreno_device *adreno_dev)
 {
-	return ADRENO_GPUREV(adreno_dev) >= 500 &&
-			ADRENO_GPUREV(adreno_dev) < 600;
+       return ADRENO_GPUREV(adreno_dev) >= 500 &&
+                       ADRENO_GPUREV(adreno_dev) < 600;
 }
 
 ADRENO_TARGET(a504, ADRENO_REV_A504)
@@ -1864,12 +1859,12 @@ static inline unsigned int counter_delta(struct kgsl_device *device,
 	/* Read the value */
 	kgsl_regread(device, reg, &val);
 
-	if (adreno_is_a5xx(adreno_dev) && reg == adreno_getreg
-		(adreno_dev, ADRENO_REG_RBBM_PERFCTR_RBBM_0_LO)) {
-		prev_perfctr_pwr_hi = perfctr_pwr_hi;
-		overflow = is_power_counter_overflow(adreno_dev, reg,
-				*counter, &perfctr_pwr_hi);
-	}
+        if (adreno_is_a5xx(adreno_dev) && reg == adreno_getreg
+               (adreno_dev, ADRENO_REG_RBBM_PERFCTR_RBBM_0_LO)) {
+               prev_perfctr_pwr_hi = perfctr_pwr_hi;
+               overflow = is_power_counter_overflow(adreno_dev, reg,
+                               *counter, &perfctr_pwr_hi);
+       }
 
 	/* Return 0 for the first read */
 	if (*counter != 0) {
