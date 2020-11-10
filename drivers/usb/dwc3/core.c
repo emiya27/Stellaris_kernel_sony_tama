@@ -1357,29 +1357,40 @@ static int dwc3_probe(struct platform_device *pdev)
 	if (ret)
 		goto err1;
 
-	ret = dwc3_debugfs_init(dwc);
-	if (ret) {
-		dev_err(dev, "failed to initialize debugfs\n");
-		goto err_core_init;
-	}
+	dwc3_debugfs_init(dwc);
+	pm_runtime_put(dev);
 
-	dwc->dwc_ipc_log_ctxt = ipc_log_context_create(NUM_LOG_PAGES,
-					dev_name(dwc->dev), 0);
-	if (!dwc->dwc_ipc_log_ctxt)
-		dev_err(dwc->dev, "Error getting ipc_log_ctxt\n");
-
-	dwc3_instance[count] = dwc;
-	dwc->index = count;
-	count++;
-
-	pm_runtime_allow(dev);
 	return 0;
 
-err_core_init:
-	dwc3_core_exit_mode(dwc);
+err5:
+	dwc3_event_buffers_cleanup(dwc);
+
+	usb_phy_shutdown(dwc->usb2_phy);
+	usb_phy_shutdown(dwc->usb3_phy);
+	phy_exit(dwc->usb2_generic_phy);
+	phy_exit(dwc->usb3_generic_phy);
+
+	usb_phy_set_suspend(dwc->usb2_phy, 1);
+	usb_phy_set_suspend(dwc->usb3_phy, 1);
+	phy_power_off(dwc->usb2_generic_phy);
+	phy_power_off(dwc->usb3_generic_phy);
+
+	dwc3_ulpi_exit(dwc);
+
+err4:
+	dwc3_free_scratch_buffers(dwc);
+
+err3:
+	dwc3_free_event_buffers(dwc);
+	dwc3_ulpi_exit(dwc);
+
+err2:
+	pm_runtime_allow(&pdev->dev);
 
 err1:
-	destroy_workqueue(dwc->dwc_wq);
+	pm_runtime_put_sync(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
+
 err0:
 	/*
 	 * restore res->start back to its original value so that, in case the
@@ -1410,11 +1421,9 @@ static int dwc3_remove(struct platform_device *pdev)
 	dwc3_core_exit(dwc);
 	dwc3_ulpi_exit(dwc);
 
-	destroy_workqueue(dwc->dwc_wq);
-
-	pm_runtime_put_sync(&pdev->dev);
-	pm_runtime_allow(&pdev->dev);
 	pm_runtime_disable(&pdev->dev);
+	pm_runtime_put_noidle(&pdev->dev);
+	pm_runtime_set_suspended(&pdev->dev);
 
 	dwc3_free_event_buffers(dwc);
 	dwc3_free_scratch_buffers(dwc);
