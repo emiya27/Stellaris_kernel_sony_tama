@@ -18,7 +18,7 @@ done
 DEFCONFIG="tama_aurora_defconfig"
 export KBUILD_BUILD_USER=Kanonify
 export KBUILD_BUILD_HOST=aurora
-TC_DIR="/workspace/proton-clang"
+TC_DIR="/usr/bin"
 export PATH="$TC_DIR/bin:$PATH"
 
 if [[ $1 = "-r" || $1 = "--regen" ]]; then
@@ -27,10 +27,7 @@ cp out/defconfig arch/arm64/configs/$DEFCONFIG
 exit
 fi
 
-if [[ $1 = "-c" || $1 = "--clean" ]]; then
-rm -rf out
-fi
-
+rm -R out
 mkdir -p out
 make O=out ARCH=arm64 $DEFCONFIG
 
